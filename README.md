@@ -20,15 +20,8 @@ https://github.com/amouat/dnmonster & https://hub.docker.com/r/amouat/dnmonster
 * Nginx
 ### Installation
 1. Clone repository
-2. Create and activate virtual environment:
-```
-python -m venv venv
-``` 
-```
-Linux: source venv/bin/activate
 
-Windows:  venv/bin/activate.bat
-``` 
+2. Create environment variables
 3. From the project directory, run the command below to create the images and the docker container:
 ```
 docker-compose up

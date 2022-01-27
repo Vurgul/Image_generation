@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   redis:
-    image: redis:latest
+    image: redis:6.2.6
     container_name: redis
     ports:
       - "6379:6379"
@@ -9,7 +9,7 @@ services:
       - ./volumes/redis:/data
     restart: always
   dnmonster:
-    image: amouat/dnmonster:latest
+    image: amouat/dnmonster:1.0
     container_name: dnmonster
     ports:
     - "8080:8080"
@@ -26,7 +26,7 @@ services:
       - redis
       - dnmonster
   nginx:
-    image: nginx:latest
+    image: nginx:1.21.6
     container_name: nginx
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro

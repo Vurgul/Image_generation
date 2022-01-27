@@ -1,5 +1,5 @@
 from fastapi.testclient import TestClient
-from api.app import app
+from api.app import app, cache
 from http import HTTPStatus
 
 USER = {
@@ -16,25 +16,11 @@ client = TestClient(app)
 
 
 def test_no_connection_without_token():
-    response = client.get('/')
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.json() == {"detail": "Not authenticated"}
-
-    response = client.get('/monster')
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.json() == {"detail": "Not authenticated"}
-
     response = client.get('/monster/test')
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.json() == {"detail": "Not authenticated"}
 
     response = client.get('/users/me')
     assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.json() == {"detail": "Not authenticated"}
-
-    response = client.get('/users/me/items')
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
-    assert response.json() == {"detail": "Not authenticated"}
 
 
 def test_register():
@@ -66,11 +52,18 @@ def test_connection_with_token():
     test_token = client.post('/token', json=USER).json()['access_token']
     test_token_value = 'Bearer Token ' + test_token
 
-    response = client.get('/', headers={"Authorization": test_token_value})
-    assert response.status_code == HTTPStatus.OK
-
-    response = client.get('/monster', headers={"Authorization": test_token_value})
-    assert response.status_code == HTTPStatus.OK
-
     response = client.get('/monster/test', headers={"Authorization": test_token_value})
     assert response.status_code == HTTPStatus.OK
+    assert response.headers['content-type'] == 'image/png'
+
+
+def test_cache():
+    cache.flushdb()
+    client.post('/register', json=USER)
+    client.post('/token', json=USER)
+    test_token = client.post('/token', json=USER).json()['access_token']
+    test_token_value = 'Bearer Token ' + test_token
+
+    assert cache.get('test_cache') is None
+    client.get('/monster/test_cache', headers={"Authorization": test_token_value})
+    assert cache.get('test_cache') is not None

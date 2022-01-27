@@ -1,18 +1,20 @@
+import os
 from datetime import datetime, timedelta
-
+from dotenv import load_dotenv
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
 
-from main import app
+
+load_dotenv()
 
 # to get a string like this run:
 # openssl rand -hex 32
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 300
+SECRET_KEY = os.getenv("SECRET_KEY")
+# use the following value: HS256
+ALGORITHM = os.getenv("ALGORITHM")
 
 
 fake_users_db = {
@@ -112,41 +114,6 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
     return current_user
 
 
-@app.post('/register', status_code=201)
-def register(auth_details: AuthDetails):
-    if any(x['username'] == auth_details.username for x in users):
-        raise HTTPException(status_code=400, detail='Username is taken')
-    hashed_password = get_password_hash(auth_details.password)
-    users.append({
-        'username': auth_details.username,
-        'hashed_password': hashed_password
-    })
-
-    fake_users_db[auth_details.username] = users[-1]
-    return {"Info": "Successful registrations! Go to /token to get a token"}
 
 
-@app.post("/token", response_model=Token)
-async def login_for_access_token(form_data: AuthDetails):
-    user = authenticate_user(fake_users_db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": user.username}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
 
-
-@app.get("/users/me/", response_model=User)
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    return current_user
-
-
-@app.get("/users/me/items/")
-async def read_own_items(current_user: User = Depends(get_current_active_user)):
-    return [{"item_id": "Foo", "owner": current_user.username}]

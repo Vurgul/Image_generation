@@ -1,7 +1,12 @@
 from fastapi import FastAPI
 import uvicorn
+import logging
 
-app = FastAPI()
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.ERROR)
+
+app = FastAPI(title='ImageGenerationAPI')
 
 
 def main():
